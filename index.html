@@ -1,0 +1,880 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GODDESS</title>
+
+<style>
+:root{
+  --pink:#ff9fca;
+  --hot:#ff68ae;
+  --cream:#fff7fb;
+  --ink:#261827;
+  --lav:#c9b2ff;
+  --dark:#090a14;
+}
+
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  min-height:100%;
+  font-family:"Trebuchet MS",system-ui,sans-serif;
+}
+
+body{
+  background:var(--dark);
+  color:white;
+  overflow-x:hidden;
+}
+
+.screen{
+  display:none;
+  min-height:100svh;
+  padding:26px 18px;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  isolation:isolate;
+}
+
+.screen.active{
+  display:flex;
+  animation:fadein .65s ease both;
+}
+
+.panel{
+  width:min(760px,100%);
+  margin:auto;
+  text-align:center;
+  position:relative;
+  z-index:2;
+}
+
+.mono{
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+
+.btn{
+  border:1px solid currentColor;
+  border-radius:999px;
+  padding:13px 24px;
+  font-size:1rem;
+  font-weight:800;
+  letter-spacing:.04em;
+  cursor:pointer;
+  background:transparent;
+  color:inherit;
+  transition:transform .2s,box-shadow .2s,background .2s;
+}
+
+.btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 24px #ff91c966;
+}
+
+.btn:active{transform:scale(.97)}
+
+.intro{
+  background:radial-gradient(ellipse at 50% 45%,#241633,#101020 45%,#05060b);
+}
+
+.intro:before,.intro:after{
+  content:"";
+  position:absolute;
+  inset:-10%;
+  background-image:
+    radial-gradient(#f8c8ff 1px,transparent 1.5px),
+    radial-gradient(#fff 1px,transparent 1.5px);
+  background-size:47px 47px,83px 83px;
+  background-position:0 0,21px 34px;
+  opacity:.22;
+  z-index:-1;
+}
+
+.intro h1{
+  font-size:clamp(2.4rem,9vw,5.5rem);
+  margin:.2em 0;
+  color:#ffb7dd;
+  text-shadow:0 0 28px #ff68ae88;
+}
+
+.intro p{color:#d9cde7}
+
+.err{
+  --shake-amp:8px;
+  --shake-rotate:1deg;
+  background:radial-gradient(ellipse at center,#280c28,#090910 70%);
+  color:#ffb8d8;
+}
+
+/* THE WHOLE SCREEN SHAKES, NOT JUST THE TEXT */
+.err.active.screen-chaos{
+  animation:screenShake .13s infinite,glitch .8s steps(2) infinite;
+  will-change:transform,filter;
+}
+
+.err h1{
+  font-size:clamp(2rem,7vw,4.5rem);
+  line-height:1.1;
+  text-shadow:3px 0 #ff237e,-3px 0 #8e5bff;
+}
+
+.destructive{
+  position:absolute;
+  inset:-10%;
+  pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg,transparent 0 8px,#ff2f7a20 9px 10px),
+    linear-gradient(115deg,transparent 35%,#ff006644 50%,transparent 65%);
+  z-index:1;
+  animation:damage .23s infinite alternate;
+  transition:opacity 1s ease,filter 1s ease;
+}
+
+.emergency{
+  margin:28px auto 0;
+  padding:18px;
+  border:2px solid #ff76b7;
+  background:#260d25;
+  box-shadow:0 0 30px #ff248855;
+  border-radius:12px;
+  width:min(460px,100%);
+  animation:emergencyShake .22s infinite,pop .45s ease both;
+}
+
+.emergency label{
+  display:block;
+  font-weight:900;
+  font-size:clamp(1rem,4vw,1.5rem);
+  margin-bottom:12px;
+}
+
+.emergency input{
+  width:min(260px,100%);
+  padding:12px;
+  border-radius:8px;
+  border:1px solid #ffa6d2;
+  background:#090711;
+  color:white;
+  font-size:1.1rem;
+  outline:none;
+  animation:inputShake .18s infinite;
+}
+
+.emergency input:focus{
+  box-shadow:0 0 18px #ff76b788;
+  border-color:#ffb7dd;
+}
+
+.emergency small{
+  display:block;
+  color:#e4a5cc;
+  margin-top:9px;
+}
+
+.repair-status{
+  display:none;
+  margin:20px auto 0;
+  width:min(420px,100%);
+  padding:16px;
+  border:1px solid #ffacd4;
+  border-radius:12px;
+  background:#fff0f8;
+  color:#7e2857;
+  text-align:left;
+  box-shadow:0 0 30px #ff91c966;
+  animation:statusPulse 1.4s ease-in-out infinite;
+}
+
+.repair-status strong{
+  display:block;
+  text-align:center;
+  margin-bottom:12px;
+  letter-spacing:.08em;
+}
+
+.repair-track{
+  height:12px;
+  border-radius:99px;
+  background:#f3bfd9;
+  overflow:hidden;
+  margin:10px 0;
+}
+
+.repair-fill{
+  height:100%;
+  width:0;
+  background:linear-gradient(90deg,#ff5eaa,#b78aff,#75d8ae);
+  border-radius:99px;
+  transition:width .4s ease;
+}
+
+.repair-line{
+  font-size:.88rem;
+  margin:7px 0;
+  opacity:.3;
+  transition:opacity .35s,color .35s;
+}
+
+.repair-line.done{
+  opacity:1;
+  color:#248b68;
+}
+
+.repair-line.current{
+  opacity:1;
+  color:#a12e70;
+  font-weight:800;
+}
+
+.repair-line.current:after{
+  content:" ...";
+  animation:typingDots 1s steps(4,end) infinite;
+}
+
+.repair-bad-good{
+  text-align:center;
+  font-weight:900;
+  font-size:.83rem;
+  letter-spacing:.12em;
+  margin:10px 0;
+  color:#a12e70;
+}
+
+.calm{
+  background:radial-gradient(ellipse at top,#ffe0ef,#fff4f9 60%,#f8d8ed);
+  color:var(--ink);
+}
+
+.calm:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:radial-gradient(#f59bc4 1px,transparent 1px);
+  background-size:30px 30px;
+  opacity:.18;
+  z-index:-1;
+  pointer-events:none;
+}
+
+.card{
+  background:#ffffffc9;
+  border:1px solid white;
+  box-shadow:0 20px 70px #c65d9540;
+  border-radius:28px;
+  padding:clamp(22px,5vw,48px);
+  backdrop-filter:blur(8px);
+}
+
+.calm h1{
+  font-size:clamp(2rem,7vw,4rem);
+  color:#c33f81;
+  margin:0 0 18px;
+}
+
+.calm p{
+  font-size:clamp(1.08rem,3vw,1.4rem);
+  line-height:1.7;
+  white-space:pre-line;
+}
+
+.next{
+  margin-top:26px;
+  background:#d94e91;
+  color:white;
+  border-color:#d94e91;
+  box-shadow:0 8px 20px #d94e9140;
+}
+
+.photo{
+  width:min(440px,100%);
+  max-height:55svh;
+  object-fit:contain;
+  border-radius:22px;
+  filter:drop-shadow(0 18px 25px #bb579155);
+  animation:floatin 1s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.caption{
+  font-size:clamp(1.4rem,4vw,2rem)!important;
+  font-weight:800;
+  color:#a52e70;
+}
+
+.moon-grid{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:10px;
+  margin:22px 0;
+}
+
+.moon-grid img{
+  width:100%;
+  aspect-ratio:3/4;
+  object-fit:cover;
+  border-radius:15px;
+  box-shadow:0 8px 20px #a8467540;
+  animation:floatin .7s both;
+}
+
+.moon-grid img:nth-child(even){
+  transform:translateY(10px);
+}
+
+.longmsg{
+  text-align:left;
+  font-size:clamp(1rem,2.6vw,1.18rem)!important;
+  line-height:1.85!important;
+}
+
+.final h1{
+  font-size:clamp(2.6rem,10vw,6rem);
+  line-height:1.15;
+  color:#c33f81;
+}
+
+.final p{
+  font-size:clamp(1.4rem,5vw,2.4rem);
+  font-weight:900;
+}
+
+.heart{
+  position:absolute;
+  color:#ff86b9;
+  opacity:.5;
+  animation:drift 7s ease-in-out infinite;
+  z-index:-1;
+}
+
+.transition{
+  animation:soften 3s ease both;
+}
+
+/* Secret MISHRII easter egg */
+
+#secretMishri{
+  cursor:pointer;
+  display:inline-block;
+  position:relative;
+  transition:color .25s,text-shadow .25s;
+}
+
+#secretMishri:hover{
+  color:#e34b94;
+  text-shadow:0 0 12px #ff8cbd88;
+}
+
+#secretMishri:focus-visible{
+  outline:2px dashed #d94e91;
+  outline-offset:4px;
+}
+
+#runawayArea{
+  position:relative;
+  width:100%;
+  height:145px;
+  margin-top:15px;
+  overflow:hidden;
+}
+
+#runawayBtn{
+  position:absolute;
+  left:50%;
+  top:12px;
+  transform:translateX(-50%);
+  z-index:10;
+  background:#d94e91;
+  color:white;
+  border:2px solid #d94e91;
+  white-space:nowrap;
+  transition:left .16s ease,top .16s ease,transform .16s ease;
+  touch-action:manipulation;
+}
+
+.secret-page .card{border:1px solid #ffd1e6}
+
+.secret-page h1{
+  color:#c33f81;
+  font-size:clamp(2.8rem,10vw,5rem);
+}
+
+.secret-page p{
+  line-height:1.9;
+  font-size:clamp(1.05rem,3vw,1.3rem);
+}
+
+@keyframes fadein{
+  from{opacity:0}
+  to{opacity:1}
+}
+
+/* Randomized full-screen movement */
+@keyframes screenShake{
+  0%{transform:translate(0,0) rotate(0)}
+  12%{transform:translate(calc(var(--shake-amp)*-.8),calc(var(--shake-amp)*.3)) rotate(calc(var(--shake-rotate)*-.7))}
+  25%{transform:translate(calc(var(--shake-amp)*.6),calc(var(--shake-amp)*-.7)) rotate(var(--shake-rotate))}
+  38%{transform:translate(calc(var(--shake-amp)*-.5),calc(var(--shake-amp)*-.2)) rotate(calc(var(--shake-rotate)*-.5))}
+  52%{transform:translate(calc(var(--shake-amp)*.9),calc(var(--shake-amp)*.4)) rotate(calc(var(--shake-rotate)*.8))}
+  67%{transform:translate(calc(var(--shake-amp)*-.3),calc(var(--shake-amp)*.8)) rotate(calc(var(--shake-rotate)*-.8))}
+  82%{transform:translate(calc(var(--shake-amp)*.4),calc(var(--shake-amp)*-.4)) rotate(calc(var(--shake-rotate)*.4))}
+  100%{transform:translate(0,0) rotate(0)}
+}
+
+@keyframes glitch{
+  0%,100%{filter:none}
+  25%{filter:hue-rotate(28deg) contrast(1.3)}
+  50%{filter:contrast(1.6) saturate(1.5)}
+  75%{filter:hue-rotate(-22deg)}
+}
+
+@keyframes damage{
+  from{opacity:.3;transform:translateX(-4px)}
+  to{opacity:.9;transform:translateX(4px)}
+}
+
+@keyframes pop{
+  from{opacity:0;scale:.7}
+  to{opacity:1;scale:1}
+}
+
+@keyframes floatin{
+  from{opacity:0;transform:translateY(24px) scale(.96)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+@keyframes drift{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-22px) rotate(12deg)}
+}
+
+@keyframes soften{
+  0%{filter:brightness(.2) saturate(2);transform:scale(1.03)}
+  50%{filter:brightness(1.5) saturate(1.2)}
+  100%{filter:none;transform:scale(1)}
+}
+
+@keyframes emergencyShake{
+  0%,100%{translate:0 0;rotate:0deg}
+  20%{translate:-3px 1px;rotate:-.35deg}
+  40%{translate:3px -1px;rotate:.35deg}
+  60%{translate:-2px -1px}
+  80%{translate:2px 2px}
+}
+
+@keyframes inputShake{
+  0%,100%{translate:0 0}
+  25%{translate:-2px 0}
+  75%{translate:2px 0}
+}
+
+@keyframes statusPulse{
+  0%,100%{box-shadow:0 0 20px #ff91c944}
+  50%{box-shadow:0 0 32px #ff91c988}
+}
+
+@keyframes typingDots{
+  0%{content:""}
+  25%{content:"."}
+  50%{content:".."}
+  75%,100%{content:"..."}
+}
+
+@media(max-width:560px){
+  .moon-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .moon-grid img:last-child{
+    grid-column:1/-1;
+    width:60%;
+    justify-self:center;
+  }
+  .screen{padding:20px 14px}
+  .card{padding:23px 18px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    scroll-behavior:auto!important;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- PAGE 1: OPENING -->
+<section class="screen intro active" id="s0">
+  <span class="heart" style="top:15%;left:12%;font-size:34px">♡</span>
+  <span class="heart" style="right:13%;bottom:18%;font-size:44px">✦</span>
+  <div class="panel mono">
+    <div style="color:#a79cc5;letter-spacing:.2em">PERSONAL SYSTEM // v1.0</div>
+    <h1>Mishri.exe</h1>
+    <p>A tiny corner of the internet, made for you.</p>
+    <button class="btn" onclick="startError()">CLICK HERE TO CONTINUE MISHRI</button>
+    <div class="hint">please do not panic. probably.</div>
+  </div>
+</section>
+
+<!-- PAGE 2: ERROR -->
+<section class="screen err" id="s1">
+  <div class="destructive" id="damage"></div>
+  <div class="panel mono">
+    <div style="letter-spacing:.18em;color:#ff8cbe">!!! CRITICAL ERROR !!!</div>
+    <h1 id="errorTitle">Mishri Detected ,<br>I fumbled again ,<br>NOOOOOOOO</h1>
+    <p id="stability" style="color:#d8a2c4">SYSTEM STABILITY: 0%</p>
+
+    <div id="emergency" class="emergency" style="display:none">
+      <label>OLY MISHRI CAN FIX IT</label>
+      <form id="repairForm">
+        <input id="code" autocomplete="off" placeholder="type httt" aria-label="Type httt and press enter">
+        <button class="btn" type="submit" style="margin-top:10px">ENTER</button>
+      </form>
+      <small>type httt and press enter</small>
+
+      <div id="repairStatus" class="repair-status">
+        <strong id="repairTitle">REPAIRING MISHRI.exe...</strong>
+        <div class="repair-bad-good" id="repairMood">BAD → FIXING → GOOD</div>
+        <div class="repair-track"><div id="repairFill" class="repair-fill"></div></div>
+        <div class="repair-line" id="r1">▸ Stabilizing the panic levels...</div>
+        <div class="repair-line" id="r2">▸ Removing unnecessary drama...</div>
+        <div class="repair-line" id="r3">▸ Replacing chaos with pink vibes...</div>
+        <div class="repair-line" id="r4">▸ Mishri-approved fix: almost done!</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PAGE 3: THANK YOU -->
+<section class="screen calm" id="s2">
+  <div class="panel card">
+    <h1>Thankyou Mishri , for saving me from panicking again 😭</h1>
+    <p>yk mishri, i hope tu khush rhee hamehsa !!!</p>
+    <button class="btn next" onclick="go(3)">NEXT</button>
+  </div>
+</section>
+
+<!-- PAGE 4: IMAGE -->
+<section class="screen calm" id="s3">
+  <div class="panel card">
+    <img class="photo" src="assets/mishri_1.png" alt="Mishri's picture">
+    <p class="caption">yk mishir you are sooooooo this &lt;3</p>
+    <button class="btn next" onclick="go(4)">HTTT</button>
+  </div>
+</section>
+
+<!-- PAGE 5: MOON IMAGES -->
+<section class="screen calm" id="s4">
+  <div class="panel card">
+    <div class="moon-grid">
+      <img src="assets/moon1.png" alt="moon1">
+      <img src="assets/moon2.png" alt="moon2">
+      <img src="assets/moon3.png" alt="moon3">
+      <img src="assets/moon4.png" alt="moon4">
+      <img src="assets/moon5.png" alt="moon5">
+    </div>
+    <p class="caption">ayo beach why you staring at me , it make me feel uncomfortable yaarw XD😭😭</p>
+    <button class="btn next" onclick="go(5)">HTTTT</button>
+  </div>
+</section>
+
+<!-- PAGE 6: LONG MESSAGE -->
+<section class="screen calm" id="s5">
+  <div class="panel card">
+    <p class="longmsg">Mishri tum bhot hi giver ho and tumhe apna v dhyan rkhna hai and padhai and kaam ko balance krna ha, ups and downs aaenge pr ill be there in your dark satge , (bhale light time mea harshitaaa, tanishkaa, ranvijay and manymore honge 😭😭XD) but ill try to atlease be in your darks and i promise paaka unnecessary gyan ni dunga bas shanti se side mea baith ke sari baate sununga, agar tumhe gussa aaega toh mea uss gusse ka pura shikar v banunga, mazak ke liye topci chaiye hoga toh v mea banunga, and many moree
+
+i wish tumhe tumhari sari dreams and coclusions pass kro, and tumhe jaha jana ha jidr jo karn ha and (safely) wo sb kro and koi tuhe unnecessary roke na , you fy high in sky gurl ! and with that hum spain../ 
+khair tum pani pite rhena and dont you forget beach ki tumhe 1000 paket chijji debt hai
+ni di toh case kr dunga, oh wait tu toh minor hai
+fKKKKKKKKKKKKKKKKKKKKKKKKKKK
+
+khair chal tu khush rhee and rhene de
+(harshita jii ka number dede plizeeeeeee 😭😭)</p>
+    <button class="btn next" onclick="go(6)">HTTTTTTT</button>
+  </div>
+</section>
+
+<!-- PAGE 7: FINAL PAGE -->
+<section class="screen calm final" id="s6">
+  <div class="panel card">
+    <h1>PANI TERA FUFA PIYEGA ??</h1>
+    <p>HAPPY DAY <span id="secretMishri" role="button" tabindex="0" aria-label="Mishri">MISHRII</span>!!!</p>
+    <p>PEACE OUT</p>
+    <div id="runawayArea">
+      <button class="btn" id="runawayBtn" type="button">HTTT</button>
+    </div>
+  </div>
+</section>
+
+<!-- PAGE 8: SECRET PAGE -->
+<section class="screen calm secret-page" id="s7">
+  <div class="panel card">
+    <h1>3000 mishri</h1>
+    <p>mea tumhe 3000 ka mtlb toh bta du , pr i respect your feelings more than mine , so for tha reason, shyd maybe tumhe iska mtb khabhi pta ni chalgea</p>
+    <p>khush rhee, dhyan rkhh</p>
+  </div>
+</section>
+
+<script>
+let current=0;
+let errorTimer=null;
+let repairTimer=null;
+let shakeRampTimer=null;
+let repairStarted=false;
+let dodgeCount=0;
+
+function go(n){
+  const oldScreen=document.getElementById('s'+current);
+  const newScreen=document.getElementById('s'+n);
+
+  if(!newScreen)return;
+
+  if(oldScreen)oldScreen.classList.remove('active');
+
+  current=n;
+  newScreen.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  if(n===6)resetRunawayButton();
+}
+
+function startError(){
+  go(1);
+
+  const err=document.getElementById('s1');
+  err.classList.add('screen-chaos');
+  err.style.setProperty('--shake-amp','9px');
+  err.style.setProperty('--shake-rotate','1.2deg');
+
+  document.getElementById('emergency').style.display='none';
+  document.getElementById('repairStatus').style.display='none';
+
+  repairStarted=false;
+  clearTimeout(errorTimer);
+  clearInterval(shakeRampTimer);
+
+  errorTimer=setTimeout(()=>{
+    if(current!==1||repairStarted)return;
+    document.getElementById('emergency').style.display='block';
+  },3000);
+}
+
+document.getElementById('repairForm').addEventListener('submit',function(e){
+  e.preventDefault();
+
+  const input=document.getElementById('code');
+
+  if(input.value.trim().toLowerCase()==='httt'){
+    repair();
+  }else{
+    input.value='';
+    input.placeholder='wrong spell, try again 😭';
+
+    input.animate([
+      {transform:'translateX(-5px)'},
+      {transform:'translateX(5px)'},
+      {transform:'translateX(-3px)'},
+      {transform:'translateX(0)'}
+    ],{duration:250});
+  }
+});
+
+/* Whole screen shake gradually slows during the repair */
+function repair(){
+  if(repairStarted)return;
+  repairStarted=true;
+
+  clearTimeout(errorTimer);
+  clearInterval(shakeRampTimer);
+
+  const err=document.getElementById('s1');
+  const title=document.getElementById('errorTitle');
+  const stability=document.getElementById('stability');
+  const status=document.getElementById('repairStatus');
+  const damage=document.getElementById('damage');
+  const input=document.getElementById('code');
+  const submit=document.querySelector('#repairForm button');
+  const mood=document.getElementById('repairMood');
+
+  input.disabled=true;
+  submit.disabled=true;
+
+  /* Keep the entire screen moving, but slowly reduce the intensity */
+  err.classList.add('screen-chaos');
+  err.classList.remove('transition');
+
+  let intensity=9;
+  let rotation=1.2;
+
+  err.style.setProperty('--shake-amp',intensity+'px');
+  err.style.setProperty('--shake-rotate',rotation+'deg');
+
+  title.innerHTML='FIXING THE FUMBLE...';
+  stability.textContent='SYSTEM STABILITY: RECOVERING';
+  status.style.display='block';
+
+  err.style.transition='background 3.5s ease,color 3.5s ease,filter 3.5s ease';
+  err.style.background='radial-gradient(ellipse at center,#ffd8eb,#fff5fa 70%)';
+  err.style.color='#7e2857';
+
+  damage.style.transition='opacity 3s ease,filter 3s ease';
+  damage.style.opacity='0';
+  damage.style.filter='blur(8px)';
+
+  const lines=['r1','r2','r3','r4'];
+  const fill=document.getElementById('repairFill');
+  let step=0;
+
+  lines.forEach(id=>{
+    document.getElementById(id).classList.remove('current','done');
+  });
+
+  fill.style.width='0%';
+
+  /* Reduce screen shake in stages, from chaotic to calm */
+  shakeRampTimer=setInterval(()=>{
+    intensity=Math.max(.15,intensity*.78);
+    rotation=Math.max(.025,rotation*.76);
+
+    err.style.setProperty('--shake-amp',intensity.toFixed(2)+'px');
+    err.style.setProperty('--shake-rotate',rotation.toFixed(3)+'deg');
+  },420);
+
+  /* Show the bad-to-good repair progress */
+  repairTimer=setInterval(()=>{
+    if(step>0){
+      document.getElementById(lines[step-1]).classList.remove('current');
+      document.getElementById(lines[step-1]).classList.add('done');
+    }
+
+    if(step<lines.length){
+      document.getElementById(lines[step]).classList.add('current');
+      fill.style.width=((step+1)/lines.length*100)+'%';
+      step++;
+    }
+
+    if(step===1){
+      mood.textContent='BAD → STABILIZING...';
+      title.textContent='CALMING THE PANIC...';
+      stability.textContent='SYSTEM STABILITY: 25%';
+    }else if(step===2){
+      mood.textContent='REPAIRING → 50%';
+      title.textContent='REMOVING THE CHAOS...';
+      stability.textContent='SYSTEM STABILITY: 50%';
+    }else if(step===3){
+      mood.textContent='GETTING BETTER → 75%';
+      title.textContent='PINK VIBES LOADING...';
+      stability.textContent='SYSTEM STABILITY: 75%';
+    }else if(step>=4){
+      mood.textContent='BAD → FIXED → GOOD ♡';
+      title.textContent='ALMOST NORMAL...';
+      stability.textContent='SYSTEM STABILITY: 95%';
+    }
+  },650);
+
+  setTimeout(()=>{
+    clearInterval(repairTimer);
+    clearInterval(shakeRampTimer);
+
+    /* Last tiny shake fades out completely */
+    err.style.setProperty('--shake-amp','0px');
+    err.style.setProperty('--shake-rotate','0deg');
+
+    setTimeout(()=>{
+      err.classList.remove('screen-chaos');
+      err.classList.add('transition');
+
+      title.innerHTML='SYSTEM RESTORED<br>...probably.';
+      stability.textContent='SYSTEM STABILITY: 100% (ISH)';
+      mood.textContent='BAD → FIXED → GOOD ♡';
+      fill.style.width='100%';
+
+      setTimeout(()=>go(2),500);
+    },350);
+  },3500);
+}
+
+/* Secret MISHRII page */
+function openSecret(){
+  go(7);
+}
+
+const secretWord=document.getElementById('secretMishri');
+
+secretWord.addEventListener('click',openSecret);
+secretWord.addEventListener('keydown',function(e){
+  if(e.key==='Enter'||e.key===' '){
+    e.preventDefault();
+    openSecret();
+  }
+});
+
+/* Runaway HTTT button */
+const runawayBtn=document.getElementById('runawayBtn');
+const runawayArea=document.getElementById('runawayArea');
+
+function dodgeButton(){
+  if(current!==6)return;
+
+  const areaRect=runawayArea.getBoundingClientRect();
+  const btnRect=runawayBtn.getBoundingClientRect();
+
+  const maxX=Math.max(0,runawayArea.clientWidth-btnRect.width);
+  const maxY=Math.max(0,runawayArea.clientHeight-btnRect.height);
+
+  const x=Math.random()*maxX;
+  const y=Math.random()*maxY;
+
+  runawayBtn.style.left=x+'px';
+  runawayBtn.style.top=y+'px';
+  runawayBtn.style.transform='rotate('+(Math.random()*24-12)+'deg)';
+
+  dodgeCount++;
+
+  const labels=[
+    'HTTT',
+    'PAKAD KE DIKHA 😭',
+    'ALMOST XD',
+    'NOPE',
+    'TOO SLOW',
+    'HTTT'
+  ];
+
+  runawayBtn.textContent=labels[dodgeCount%labels.length];
+}
+
+function resetRunawayButton(){
+  dodgeCount=0;
+  runawayBtn.textContent='HTTT';
+  runawayBtn.style.left='50%';
+  runawayBtn.style.top='12px';
+  runawayBtn.style.transform='translateX(-50%)';
+}
+
+runawayBtn.addEventListener('mouseenter',dodgeButton);
+
+runawayBtn.addEventListener('pointerdown',function(e){
+  e.preventDefault();
+  dodgeButton();
+});
+
+runawayBtn.addEventListener('click',function(e){
+  e.preventDefault();
+  dodgeButton();
+});
+
+runawayArea.addEventListener('pointermove',function(e){
+  if(current!==6)return;
+
+  const rect=runawayBtn.getBoundingClientRect();
+  const dx=e.clientX-(rect.left+rect.width/2);
+  const dy=e.clientY-(rect.top+rect.height/2);
+  const distance=Math.sqrt(dx*dx+dy*dy);
+
+  if(distance<65)dodgeButton();
+});
+</script>
+</body>
+</html>
